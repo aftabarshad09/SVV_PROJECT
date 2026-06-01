@@ -1,21 +1,13 @@
-open util/ordering[Date]
-
 sig Date {}
-
-abstract sig Bool {}
-one sig True, False extends Bool {}
-
 sig Customer {
   isActive: one Bool
 }
-
 sig Vehicle {
   status: one VehicleStatus,
   currentOdometer: one Int,
   lastServiceOdometer: one Int
 }
-
-abstract sig VehicleStatus {}
+sig VehicleStatus {}
 one sig Available, Booked, Maintenance, Retired extends VehicleStatus {}
 
 sig Booking {
@@ -25,35 +17,33 @@ sig Booking {
   returnDate: one Date,
   isActive: one Bool
 }
-
--- Fact 1: Booking Date Ordering
+--Fact 1: Vehicle Status Uniqueness
+fact Uniqueness {
+  'status: one VehicleStatus'
+}
+--Fact 2: Booking Date Ordering
 fact BookingDateOrdering {
   all b: Booking |
-    b.pickupDate != b.returnDate and
-    b.pickupDate in prevs[b.returnDate]
+    lt[b.pickupDate, b.returnDate]
 }
-
--- Fact 2: Active Booking Implies Booked Vehicle
+-- Fact 3: Active Booking Implies Booked Vehicle
 fact ActiveBookingImpliesBookedVehicle {
   all b: Booking |
     b.isActive = True =>
     b.vehicle.status = Booked
 }
-
--- Fact 3: Booked Vehicle Has Active Booking
+-- Fact 4: Booked Vehicle Has Active Booking
 fact BookedVehicleHasActiveBooking {
   all v: Vehicle |
     v.status = Booked =>
     some b: Booking |
       b.vehicle = v and b.isActive = True
 }
-
--- Fact 4: Customer Must Be Active For Booking
+-- Fact 5: Customer Must Exist And Be Active For Booking
 fact CustomerMustBeActive {
   all b: Booking |
     b.customer.isActive = True
 }
-
 -- Assertion 1: No Vehicle Can Be Booked And Available Simultaneously
 assert NoVehicleBookedAndAvailable {
   no v: Vehicle |
@@ -70,23 +60,15 @@ assert MaintenanceExclusion {
 }
 check MaintenanceExclusion for 10
 
--- Helper predicate for overlapping dates
-pred overlaps[b1, b2: Booking] {
-  b1.pickupDate in prevs[b2.returnDate] and
-  b2.pickupDate in prevs[b1.returnDate]
-}
-
 -- Assertion 3: No Overlapping Active Bookings Same Vehicle
 assert OverlapPrevention {
   no disj b1, b2: Booking |
     b1.vehicle = b2.vehicle and
-    b1.isActive = True and
-    b2.isActive = True and
-    overlaps[b1, b2]
+    b1.isActive = True and b2.isActive = True and
+    dateInRange[b1.pickupDate, b2]
 }
 check OverlapPrevention for 10
 
--- Counterexample scenario
 pred counterexampleScenario {
   some v: Vehicle, b: Booking |
     v.status = Maintenance and
