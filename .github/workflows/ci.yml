@@ -5,8 +5,8 @@ on:
     branches: [ main ]
     paths:
       - 'z-model/**'
-      - 'vdm-spec/**'
-      - 'alloy-model/**'
+      - 'vdm-specification/**'
+      - 'Alloy/**'
       - 'requirements/**'
   pull_request:
     branches: [ main ]
@@ -46,8 +46,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Count pre/post conditions
         run: |
-          pre=$(grep -c "pre " vdm-spec/*.vdmsl 2>/dev/null || echo 0)
-          post=$(grep -c "post " vdm-spec/*.vdmsl 2>/dev/null || echo 0)
+          pre=$(grep -c "pre " vdm-specification/*.vdmpp 2>/dev/null || echo 0)
+          post=$(grep -c "post " vdm-specification/*.vdmpp 2>/dev/null || echo 0)
           echo "Pre: $pre | Post: $post"
           if [ "$pre" -lt 2 ] || [ "$post" -lt 2 ]; then
             echo "Minimum 2 pre/post pairs required" && exit 1
@@ -60,14 +60,14 @@ jobs:
       - uses: actions/checkout@v4
       - name: Count assertions
         run: |
-          count=$(grep -c "^assert " alloy-model/*.als 2>/dev/null || echo 0)
+          count=$(grep -c "^assert " Alloy/*.als 2>/dev/null || echo 0)
           echo "Assertions: $count"
           if [ "$count" -lt 5 ]; then
             echo "Minimum 5 assertions required" && exit 1
           fi
       - name: Check counterexample report
         run: |
-          if [ ! -f "alloy-model/counterexample-report.md" ]; then
+          if [ ! -f "Alloy/counterexample-report.md" ]; then
             echo "Counterexample report missing" && exit 1
           fi
 
@@ -90,8 +90,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check validation results
         run: |
-          pass=$(grep -c "PASS" validation/validation-checklist.md 2>/dev/null || echo 0)
-          fail=$(grep -c "FAIL" validation/validation-checklist.md 2>/dev/null || echo 0)
+          pass=$(grep -c "PASS" validation/validation-report.md 2>/dev/null || echo 0)
+          fail=$(grep -c "FAIL" validation/validation-report.md 2>/dev/null || echo 0)
           echo "Passed: $pass | Failed: $fail"
 
  
